@@ -1,3 +1,4 @@
+const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
 const User = require("./User");
@@ -7,6 +8,7 @@ const Project = require("./Project");
 const Board = require("./Board");
 const Column = require("./Column");
 const Task = require("./Task");
+const Comment = require("./Comment");
 
 // User ↔ Workspace
 User.hasMany(Workspace, {
@@ -109,6 +111,28 @@ Task.belongsTo(Column, {
   as: "column",
 });
 
+Task.hasMany(Comment, {
+  foreignKey: "taskId",
+  as: "comments",
+  onDelete: "CASCADE",
+});
+
+Comment.belongsTo(Task, {
+  foreignKey: "taskId",
+  as: "task",
+});
+
+User.hasMany(Comment, {
+  foreignKey: "userId",
+  as: "comments",
+  onDelete: "CASCADE",
+});
+
+Comment.belongsTo(User, {
+  foreignKey: "userId",
+  as: "user",
+});
+
 module.exports = {
   sequelize,
   User,
@@ -118,4 +142,5 @@ module.exports = {
   Board,
   Column,
   Task,
+  Comment,
 };

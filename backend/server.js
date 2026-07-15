@@ -8,6 +8,7 @@ const workspaceMemberRoutes = require("./routes/workspaceMemberRoutes");
 const projectRoutes = require("./routes/projectRoutes");
 const boardRoutes = require("./routes/boardRoutes");
 const taskRoutes = require("./routes/taskRoutes");
+const commentRoutes = require("./routes/commentRoutes");
 
 // Import all models here
 require("./models");
@@ -22,6 +23,10 @@ app.use("/api/workspaces", workspaceMemberRoutes);
 app.use("/api/workspaces", projectRoutes);
 app.use("/api/workspaces", boardRoutes);
 app.use("/api/workspaces", taskRoutes);
+app.use(
+  "/api/workspaces/:workspaceId/projects/:projectId/boards/:boardId/columns/:columnId/tasks/:taskId/comments",
+  commentRoutes
+);
 
 // Test Route
 app.get("/", (req, res) => {
