@@ -9,6 +9,7 @@ const Board = require("./Board");
 const Column = require("./Column");
 const Task = require("./Task");
 const Comment = require("./Comment");
+const Attachment = require("./Attachment");
 
 // User ↔ Workspace
 User.hasMany(Workspace, {
@@ -133,6 +134,30 @@ Comment.belongsTo(User, {
   as: "user",
 });
 
+// Task ↔ Attachment
+Task.hasMany(Attachment, {
+  foreignKey: "taskId",
+  as: "attachments",
+  onDelete: "CASCADE",
+});
+
+Attachment.belongsTo(Task, {
+  foreignKey: "taskId",
+  as: "task",
+});
+
+// User ↔ Attachment
+User.hasMany(Attachment, {
+  foreignKey: "userId",
+  as: "attachments",
+  onDelete: "CASCADE",
+});
+
+Attachment.belongsTo(User, {
+  foreignKey: "userId",
+  as: "user",
+});
+
 module.exports = {
   sequelize,
   User,
@@ -143,4 +168,5 @@ module.exports = {
   Column,
   Task,
   Comment,
+  Attachment,
 };

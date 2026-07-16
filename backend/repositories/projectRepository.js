@@ -32,6 +32,15 @@ const deleteProject = async (project) => {
   return await project.destroy();
 };
 
+const findByWorkspaceAndId = async (workspaceId, projectId) => {
+  return await Project.findOne({
+    where: {
+      id: projectId,
+      workspaceId,
+    },
+  });
+};
+
 module.exports = {
   createProject,
   getWorkspaceProjects,
@@ -39,4 +48,5 @@ module.exports = {
   findProjectByKey,
   updateProject,
   deleteProject,
+  findByWorkspaceAndId,
 };
