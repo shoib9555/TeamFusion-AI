@@ -3,6 +3,7 @@ const columnRepository = require("../repositories/columnRepository");
 const boardRepository = require("../repositories/boardRepository");
 const projectRepository = require("../repositories/projectRepository");
 const workspaceMemberRepository = require("../repositories/workspaceMemberRepository");
+const notificationRepository = require("../repositories/notificationRepository");
 
 const { sequelize } = require("../models");
 
@@ -88,20 +89,31 @@ try {
       transaction
     );
 
-  const task =
-    await taskRepository.createTask(
-      {
-        ...taskData,
-        columnId,
-        reporterId,
-        position: lastPosition + 1,
-      },
-      transaction
-    );
+const task =
+  await taskRepository.createTask(
+    {
+      ...taskData,
+      columnId,
+      reporterId,
+      position: lastPosition + 1,
+    },
+    transaction
+  );
 
-  await transaction.commit();
+await transaction.commit();
 
-  return task;
+// Create notification if task has an assignee
+if (task.assigneeId) {
+  await notificationRepository.createNotification({
+    userId: task.assigneeId,
+    taskId: task.id,
+    type: "TASK_ASSIGNED",
+    title: "Task Assigned",
+    message: `You have been assigned the task "${task.title}".`,
+  });
+}
+
+return task;
 
 } catch (error) {
 
@@ -207,7 +219,7 @@ const updateTask = async (
     columnId,
     taskId
   );
-
+const oldAssigneeId = task.assigneeId;
   if (!task) {
     throw new Error("Task not found");
   }
@@ -242,7 +254,23 @@ const updateTask = async (
     }
   }
 
-  return await taskRepository.updateTask(task, taskData);
+  const updatedTask = await taskRepository.updateTask(task, taskData);
+
+// Notify only if assignee changed
+if (
+  updatedTask.assigneeId &&
+  updatedTask.assigneeId !== oldAssigneeId
+) {
+  await notificationRepository.createNotification({
+    userId: updatedTask.assigneeId,
+    taskId: updatedTask.id,
+    type: "TASK_ASSIGNED",
+    title: "Task Assigned",
+    message: `You have been assigned the task "${updatedTask.title}".`,
+  });
+}
+
+return updatedTask;
 };
 
 // Delete Task

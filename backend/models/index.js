@@ -10,6 +10,7 @@ const Column = require("./Column");
 const Task = require("./Task");
 const Comment = require("./Comment");
 const Attachment = require("./Attachment");
+const Notification = require("./Notification");
 
 // User ↔ Workspace
 User.hasMany(Workspace, {
@@ -158,6 +159,15 @@ Attachment.belongsTo(User, {
   as: "user",
 });
 
+User.hasMany(Notification, {
+  foreignKey: "userId",
+  onDelete: "CASCADE",
+});
+
+Notification.belongsTo(User, {
+  foreignKey: "userId",
+});
+
 module.exports = {
   sequelize,
   User,
@@ -169,4 +179,5 @@ module.exports = {
   Task,
   Comment,
   Attachment,
+  Notification,
 };

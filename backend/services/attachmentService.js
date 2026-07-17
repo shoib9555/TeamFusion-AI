@@ -5,6 +5,7 @@ const taskRepository = require("../repositories/taskRepository");
 const columnRepository = require("../repositories/columnRepository");
 const boardRepository = require("../repositories/boardRepository");
 const projectRepository = require("../repositories/projectRepository");
+const notificationRepository = require("../repositories/notificationRepository");
 
 // -----------------------------------------
 // Common Hierarchy Validation
@@ -72,29 +73,43 @@ const uploadAttachment = async (
   file
 ) => {
   // Validate hierarchy
-  await validateHierarchy(
-    workspaceId,
-    projectId,
-    boardId,
-    columnId,
-    taskId
-  );
+  // Validate hierarchy
+const task = await validateHierarchy(
+  workspaceId,
+  projectId,
+  boardId,
+  columnId,
+  taskId
+);
 
-  // Check if file exists
-  if (!file) {
-    throw new Error("No file uploaded");
-  }
+// Check if file exists
+if (!file) {
+  throw new Error("No file uploaded");
+}
 
-  // Save attachment
-  return await attachmentRepository.createAttachment({
-    taskId,
-    userId,
-    fileName: file.filename,
-    originalName: file.originalname,
-    filePath: file.path,
-    mimeType: file.mimetype,
-    fileSize: file.size,
+// Save attachment
+const attachment = await attachmentRepository.createAttachment({
+  taskId,
+  userId,
+  fileName: file.filename,
+  originalName: file.originalname,
+  filePath: file.path,
+  mimeType: file.mimetype,
+  fileSize: file.size,
+});
+
+// Notify task assignee (don't notify yourself)
+if (task.assigneeId && task.assigneeId !== userId) {
+  await notificationRepository.createNotification({
+    userId: task.assigneeId,
+    taskId: task.id,
+    type: "ATTACHMENT_ADDED",
+    title: "New Attachment",
+    message: `A new attachment was uploaded to the task "${task.title}".`,
   });
+}
+
+return attachment;
 };
 
 // -----------------------------------------

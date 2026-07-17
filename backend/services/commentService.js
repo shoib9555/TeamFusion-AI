@@ -3,6 +3,7 @@ const taskRepository = require("../repositories/taskRepository");
 const columnRepository = require("../repositories/columnRepository");
 const boardRepository = require("../repositories/boardRepository");
 const projectRepository = require("../repositories/projectRepository");
+const notificationRepository = require("../repositories/notificationRepository");
 
 const {
   createCommentSchema,
@@ -77,19 +78,32 @@ const createComment = async (
     throw new Error(error.details[0].message);
   }
 
-  await validateHierarchy(
-    workspaceId,
-    projectId,
-    boardId,
-    columnId,
-    taskId
-  );
+const task = await validateHierarchy(
+  workspaceId,
+  projectId,
+  boardId,
+  columnId,
+  taskId
+);
 
-  return await commentRepository.create({
-    taskId,
-    userId,
-    content: commentData.content,
+const comment = await commentRepository.create({
+  taskId,
+  userId,
+  content: commentData.content,
+});
+
+// Notify task assignee (don't notify yourself)
+if (task.assigneeId && task.assigneeId !== userId) {
+  await notificationRepository.createNotification({
+    userId: task.assigneeId,
+    taskId: task.id,
+    type: "COMMENT_ADDED",
+    title: "New Comment",
+    message: `A new comment was added to the task "${task.title}".`,
   });
+}
+
+return comment;
 };
 
 // -----------------------------------------

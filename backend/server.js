@@ -11,6 +11,8 @@ const boardRoutes = require("./routes/boardRoutes");
 const taskRoutes = require("./routes/taskRoutes");
 const commentRoutes = require("./routes/commentRoutes");
 const attachmentRoutes = require("./routes/attachmentRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
+
 
 // Import all models here
 require("./models");
@@ -38,6 +40,9 @@ app.use(
   "/api/workspaces/:workspaceId/projects/:projectId/boards/:boardId/columns/:columnId/tasks/:taskId/attachments",
   attachmentRoutes
 );
+app.use("/api/notifications", notificationRoutes);
+
+
 
 // Test Route
 app.get("/", (req, res) => {
