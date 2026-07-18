@@ -2,6 +2,7 @@ require("dotenv").config();
 
 const express = require("express");
 const path = require("path");
+const { API_PREFIX } = require("./config/api");
 const sequelize = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const workspaceRoutes = require("./routes/workspaceRoutes");
@@ -23,22 +24,22 @@ const app = express();
 app.use(express.json());
 // Serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-app.use("/api/auth", authRoutes);
-app.use("/api/workspaces", workspaceRoutes);
-app.use("/api/workspaces", workspaceMemberRoutes);
-app.use("/api/workspaces", projectRoutes);
-app.use("/api/workspaces", boardRoutes);
-app.use("/api/workspaces", taskRoutes);
+app.use(`${API_PREFIX}/auth`, authRoutes);
+app.use(`${API_PREFIX}/workspaces`, workspaceRoutes);
+app.use(`${API_PREFIX}/workspaces`, workspaceMemberRoutes);
+app.use(`${API_PREFIX}/workspaces`, projectRoutes);
+app.use(`${API_PREFIX}/workspaces`, boardRoutes);
+app.use(`${API_PREFIX}/workspaces`, taskRoutes);
 app.use(
-  "/api/workspaces/:workspaceId/projects/:projectId/boards/:boardId/columns/:columnId/tasks/:taskId/comments",
+  `${API_PREFIX}/workspaces/:workspaceId/projects/:projectId/boards/:boardId/columns/:columnId/tasks/:taskId/comments`,
   commentRoutes,
 );
 app.use(
-  "/api/workspaces/:workspaceId/projects/:projectId/boards/:boardId/columns/:columnId/tasks/:taskId/attachments",
+  `${API_PREFIX}/workspaces/:workspaceId/projects/:projectId/boards/:boardId/columns/:columnId/tasks/:taskId/attachments`,
   attachmentRoutes,
 );
-app.use("/api/notifications", notificationRoutes);
-app.use("/api/workspaces", sprintRoutes);
+app.use(`${API_PREFIX}/notifications`, notificationRoutes);
+app.use(`${API_PREFIX}/workspaces`, sprintRoutes);
 
 
 
