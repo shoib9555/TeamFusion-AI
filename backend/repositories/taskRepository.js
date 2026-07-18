@@ -1,4 +1,4 @@
-const { Task } = require("../models");
+const { Task, Column, Board } = require("../models");
 
 // Create Task
 const createTask = async (taskData, transaction = null) => {
@@ -79,6 +79,31 @@ const moveTask = async (
   );
 };
 
+async function findTaskByProject(projectId, taskId) {
+  return Task.findOne({
+    where: {
+      id: taskId,
+    },
+    include: [
+      {
+        model: Column,
+        as: "column",
+        required: true,
+        include: [
+          {
+            model: Board,
+            as: "board",
+            required: true,
+            where: {
+              projectId,
+            },
+          },
+        ],
+      },
+    ],
+  });
+}
+
 module.exports = {
   createTask,
   findAllByColumn,
@@ -89,4 +114,5 @@ module.exports = {
   deleteTask,
   getLastPosition,
   moveTask,
+  findTaskByProject,
 };

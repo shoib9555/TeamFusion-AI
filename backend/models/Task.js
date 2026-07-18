@@ -15,6 +15,11 @@ const Task = sequelize.define(
       allowNull: false,
     },
 
+    sprintId: {
+      type: DataTypes.BIGINT,
+      allowNull: true,
+    },
+
     title: {
       type: DataTypes.STRING(255),
       allowNull: false,
@@ -31,12 +36,7 @@ const Task = sequelize.define(
     },
 
     status: {
-      type: DataTypes.ENUM(
-        "TODO",
-        "IN_PROGRESS",
-        "TESTING",
-        "DONE"
-      ),
+      type: DataTypes.ENUM("TODO", "IN_PROGRESS", "TESTING", "DONE"),
       defaultValue: "TODO",
     },
 
@@ -69,7 +69,7 @@ const Task = sequelize.define(
   {
     tableName: "tasks",
     timestamps: true,
-  }
+  },
 );
 
 module.exports = Task;

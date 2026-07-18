@@ -11,6 +11,7 @@ const Task = require("./Task");
 const Comment = require("./Comment");
 const Attachment = require("./Attachment");
 const Notification = require("./Notification");
+const Sprint = require("./Sprint");
 
 // User ↔ Workspace
 User.hasMany(Workspace, {
@@ -168,6 +169,27 @@ Notification.belongsTo(User, {
   foreignKey: "userId",
 });
 
+Project.hasMany(Sprint, {
+  foreignKey: "projectId",
+  as: "sprints",
+  onDelete: "CASCADE",
+});
+
+Sprint.belongsTo(Project, {
+  foreignKey: "projectId",
+  as: "project",
+});
+
+Sprint.hasMany(Task, {
+  foreignKey: "sprintId",
+  as: "tasks",
+});
+
+Task.belongsTo(Sprint, {
+  foreignKey: "sprintId",
+  as: "sprint",
+});
+
 module.exports = {
   sequelize,
   User,
@@ -180,4 +202,5 @@ module.exports = {
   Comment,
   Attachment,
   Notification,
+  Sprint,
 };

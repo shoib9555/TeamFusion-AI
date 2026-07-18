@@ -12,7 +12,7 @@ const taskRoutes = require("./routes/taskRoutes");
 const commentRoutes = require("./routes/commentRoutes");
 const attachmentRoutes = require("./routes/attachmentRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
-
+const sprintRoutes = require("./routes/sprintRoutes");
 
 // Import all models here
 require("./models");
@@ -22,10 +22,7 @@ const app = express();
 // Middleware
 app.use(express.json());
 // Serve uploaded files
-app.use(
-  "/uploads",
-  express.static(path.join(__dirname, "uploads"))
-);
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api/auth", authRoutes);
 app.use("/api/workspaces", workspaceRoutes);
 app.use("/api/workspaces", workspaceMemberRoutes);
@@ -34,13 +31,14 @@ app.use("/api/workspaces", boardRoutes);
 app.use("/api/workspaces", taskRoutes);
 app.use(
   "/api/workspaces/:workspaceId/projects/:projectId/boards/:boardId/columns/:columnId/tasks/:taskId/comments",
-  commentRoutes
+  commentRoutes,
 );
 app.use(
   "/api/workspaces/:workspaceId/projects/:projectId/boards/:boardId/columns/:columnId/tasks/:taskId/attachments",
-  attachmentRoutes
+  attachmentRoutes,
 );
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/workspaces", sprintRoutes);
 
 
 
@@ -59,7 +57,9 @@ async function startServer() {
     // Sync models with database
     const isDevelopment = process.env.NODE_ENV !== "production";
 
-    await sequelize.sync();
+    await sequelize.sync({
+      alter: true,
+    });
     console.log("✅ Database Synced Successfully");
 
     // Start server
