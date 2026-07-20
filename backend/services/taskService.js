@@ -19,7 +19,7 @@ const createTask = async (
   boardId,
   columnId,
   taskData,
-  reporterId
+  reporterId,
 ) => {
   // Validate input
   const { error } = createTaskSchema.validate(taskData);
@@ -36,20 +36,14 @@ const createTask = async (
   }
 
   // Validate board
-  const board = await boardRepository.getBoardByProject(
-    projectId,
-    boardId
-  );
+  const board = await boardRepository.getBoardByProject(projectId, boardId);
 
   if (!board) {
     throw new Error("Board not found");
   }
 
   // Validate column
-  const column = await columnRepository.findByBoardAndId(
-    boardId,
-    columnId
-  );
+  const column = await columnRepository.findByBoardAndId(boardId, columnId);
 
   if (!column) {
     throw new Error("Column not found");
@@ -58,7 +52,7 @@ const createTask = async (
   // Duplicate title check
   const existingTask = await taskRepository.findByColumnAndTitle(
     columnId,
-    taskData.title
+    taskData.title,
   );
 
   if (existingTask) {
@@ -67,11 +61,10 @@ const createTask = async (
 
   // Validate assignee
   if (taskData.assigneeId) {
-    const member =
-      await workspaceMemberRepository.getMemberRole(
-        workspaceId,
-        taskData.assigneeId
-      );
+    const member = await workspaceMemberRepository.getMemberRole(
+      workspaceId,
+      taskData.assigneeId,
+    );
 
     if (!member) {
       throw new Error("Assignee is not a workspace member");
@@ -79,70 +72,53 @@ const createTask = async (
   }
 
   // Position
-const transaction = await sequelize.transaction();
+  const transaction = await sequelize.transaction();
 
-try {
-
-  const lastPosition =
-    await taskRepository.getLastPosition(
+  try {
+    const lastPosition = await taskRepository.getLastPosition(
       columnId,
-      transaction
+      transaction,
     );
 
-const task =
-  await taskRepository.createTask(
-    {
-      ...taskData,
-      columnId,
-      reporterId,
-      position: lastPosition + 1,
-    },
-    transaction
-  );
+    const task = await taskRepository.createTask(
+      {
+        ...taskData,
+        columnId,
+        reporterId,
+        position: lastPosition + 1,
+      },
+      transaction,
+    );
 
-await transaction.commit();
+    await transaction.commit();
 
-// Create notification if task has an assignee
-if (task.assigneeId) {
-  await notificationRepository.createNotification({
-    userId: task.assigneeId,
-    taskId: task.id,
-    type: "TASK_ASSIGNED",
-    title: "Task Assigned",
-    message: `You have been assigned the task "${task.title}".`,
-  });
-}
+    // Create notification if task has an assignee
+    if (task.assigneeId) {
+      await notificationRepository.createNotification({
+        userId: task.assigneeId,
+        taskId: task.id,
+        type: "TASK_ASSIGNED",
+        title: "Task Assigned",
+        message: `You have been assigned the task "${task.title}".`,
+      });
+    }
 
-return task;
+    return task;
+  } catch (error) {
+    await transaction.rollback();
 
-} catch (error) {
-
-  await transaction.rollback();
-
-  throw error;
-
-}
+    throw error;
+  }
 };
 // Get Tasks
-const getTasksByColumn = async (
-  projectId,
-  boardId,
-  columnId
-) => {
-  const board = await boardRepository.getBoardByProject(
-    projectId,
-    boardId
-  );
+const getTasksByColumn = async (projectId, boardId, columnId) => {
+  const board = await boardRepository.getBoardByProject(projectId, boardId);
 
   if (!board) {
     throw new Error("Board not found");
   }
 
-  const column =
-    await columnRepository.findByBoardAndId(
-      boardId,
-      columnId
-    );
+  const column = await columnRepository.findByBoardAndId(boardId, columnId);
 
   if (!column) {
     throw new Error("Column not found");
@@ -152,21 +128,14 @@ const getTasksByColumn = async (
 };
 
 // Get Single Task
-const getTaskById = async (
-  projectId,
-  boardId,
-  columnId,
-  taskId
-) => {
-  const task =
-    await taskRepository.findByColumnAndId(
-      columnId,
-      taskId
-    );
+const getTaskById = async (projectId, boardId, columnId, taskId) => {
+const task = await taskRepository.findByColumnAndId(columnId, taskId);
 
-  if (!task) {
+if (!task) {
     throw new Error("Task not found");
-  }
+}
+
+const oldAssigneeId = task.assigneeId;
 
   return task;
 };
@@ -178,7 +147,7 @@ const updateTask = async (
   boardId,
   columnId,
   taskId,
-  taskData
+  taskData,
 ) => {
   // Validate request body
   const { error } = updateTaskSchema.validate(taskData);
@@ -195,82 +164,74 @@ const updateTask = async (
   }
 
   // Validate Board
-  const board = await boardRepository.getBoardByProject(
-    projectId,
-    boardId
-  );
+  const board = await boardRepository.getBoardByProject(projectId, boardId);
 
   if (!board) {
     throw new Error("Board not found");
   }
 
   // Validate Column
-  const column = await columnRepository.findByBoardAndId(
-    boardId,
-    columnId
-  );
+  const column = await columnRepository.findByBoardAndId(boardId, columnId);
 
   if (!column) {
     throw new Error("Column not found");
   }
 
   // Validate Task (IDOR Protection)
-  const task = await taskRepository.findByColumnAndId(
-    columnId,
-    taskId
-  );
-const oldAssigneeId = task.assigneeId;
+  const task = await taskRepository.findByColumnAndId(columnId, taskId);
+  const oldAssigneeId = task.assigneeId;
   if (!task) {
     throw new Error("Task not found");
   }
 
   // Duplicate title check
   if (taskData.title && taskData.title !== task.title) {
-    const existingTask =
-      await taskRepository.findByColumnAndTitle(
-        columnId,
-        taskData.title
-      );
+    const existingTask = await taskRepository.findByColumnAndTitle(
+      columnId,
+      taskData.title,
+    );
 
     if (existingTask) {
-      throw new Error(
-        "Task title already exists in this column"
-      );
+      throw new Error("Task title already exists in this column");
     }
   }
 
   // Validate assignee
   if (taskData.assigneeId) {
-    const member =
-      await workspaceMemberRepository.getMemberRole(
-        workspaceId,
-        taskData.assigneeId
-      );
+    const member = await workspaceMemberRepository.getMemberRole(
+      workspaceId,
+      taskData.assigneeId,
+    );
 
     if (!member) {
-      throw new Error(
-        "Assignee is not a workspace member"
-      );
+      throw new Error("Assignee is not a workspace member");
     }
   }
+  // Set completedAt when task is marked DONE
+  if (taskData.status === "DONE" && task.status !== "DONE") {
+    taskData.completedAt = new Date();
+  }
+
+  // Clear completedAt when task is moved out of DONE
+  if (taskData.status && taskData.status !== "DONE") {
+    taskData.completedAt = null;
+  }
+
 
   const updatedTask = await taskRepository.updateTask(task, taskData);
 
-// Notify only if assignee changed
-if (
-  updatedTask.assigneeId &&
-  updatedTask.assigneeId !== oldAssigneeId
-) {
-  await notificationRepository.createNotification({
-    userId: updatedTask.assigneeId,
-    taskId: updatedTask.id,
-    type: "TASK_ASSIGNED",
-    title: "Task Assigned",
-    message: `You have been assigned the task "${updatedTask.title}".`,
-  });
-}
+  // Notify only if assignee changed
+  if (updatedTask.assigneeId && updatedTask.assigneeId !== oldAssigneeId) {
+    await notificationRepository.createNotification({
+      userId: updatedTask.assigneeId,
+      taskId: updatedTask.id,
+      type: "TASK_ASSIGNED",
+      title: "Task Assigned",
+      message: `You have been assigned the task "${updatedTask.title}".`,
+    });
+  }
 
-return updatedTask;
+  return updatedTask;
 };
 
 // Delete Task
@@ -279,7 +240,7 @@ const deleteTask = async (
   projectId,
   boardId,
   columnId,
-  taskId
+  taskId,
 ) => {
   // Validate Project
   const project = await projectRepository.getProjectById(projectId);
@@ -289,30 +250,21 @@ const deleteTask = async (
   }
 
   // Validate Board
-  const board = await boardRepository.getBoardByProject(
-    projectId,
-    boardId
-  );
+  const board = await boardRepository.getBoardByProject(projectId, boardId);
 
   if (!board) {
     throw new Error("Board not found");
   }
 
   // Validate Column
-  const column = await columnRepository.findByBoardAndId(
-    boardId,
-    columnId
-  );
+  const column = await columnRepository.findByBoardAndId(boardId, columnId);
 
   if (!column) {
     throw new Error("Column not found");
   }
 
   // Validate Task (IDOR Protection)
-  const task = await taskRepository.findByColumnAndId(
-    columnId,
-    taskId
-  );
+  const task = await taskRepository.findByColumnAndId(columnId, taskId);
 
   if (!task) {
     throw new Error("Task not found");
@@ -320,26 +272,19 @@ const deleteTask = async (
 
   const transaction = await sequelize.transaction();
 
-try {
-
-    await taskRepository.deleteTask(
-        task,
-        transaction
-    );
+  try {
+    await taskRepository.deleteTask(task, transaction);
 
     await transaction.commit();
 
     return {
-        message: "Task deleted successfully",
+      message: "Task deleted successfully",
     };
-
-} catch(error){
-
+  } catch (error) {
     await transaction.rollback();
 
     throw error;
-
-}
+  }
 };
 
 const moveTask = async (
@@ -347,66 +292,54 @@ const moveTask = async (
   projectId,
   boardId,
   taskId,
-  targetColumnId
+  targetColumnId,
 ) => {
-
   const transaction = await sequelize.transaction();
 
   try {
-
-    const project =
-      await projectRepository.getProjectById(projectId);
+    const project = await projectRepository.getProjectById(projectId);
 
     if (!project || project.workspaceId != workspaceId) {
       throw new Error("Project not found");
     }
 
-    const board =
-      await boardRepository.getBoardByProject(
-        projectId,
-        boardId
-      );
+    const board = await boardRepository.getBoardByProject(projectId, boardId);
 
     if (!board) {
       throw new Error("Board not found");
     }
 
-    const targetColumn =
-      await columnRepository.findByBoardAndId(
-        boardId,
-        targetColumnId
-      );
+    const targetColumn = await columnRepository.findByBoardAndId(
+      boardId,
+      targetColumnId,
+    );
 
     if (!targetColumn) {
       throw new Error("Target column not found");
     }
 
-    const task =
-      await taskRepository.findById(taskId);
+    const task = await taskRepository.findById(taskId);
 
     if (!task) {
       throw new Error("Task not found");
     }
 
-    const lastPosition =
-      await taskRepository.getLastPosition(
-        targetColumnId,
-        transaction
-      );
+    const lastPosition = await taskRepository.getLastPosition(
+      targetColumnId,
+      transaction,
+    );
 
     await taskRepository.moveTask(
       task,
       targetColumnId,
       lastPosition + 1,
-      transaction
+      transaction,
     );
 
     await transaction.commit();
 
     return task;
-
   } catch (error) {
-
     await transaction.rollback();
 
     throw error;

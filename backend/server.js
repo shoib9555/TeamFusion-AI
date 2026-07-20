@@ -14,6 +14,7 @@ const commentRoutes = require("./routes/commentRoutes");
 const attachmentRoutes = require("./routes/attachmentRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const sprintRoutes = require("./routes/sprintRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
 
 // Import all models here
 require("./models");
@@ -40,6 +41,8 @@ app.use(
 );
 app.use(`${API_PREFIX}/notifications`, notificationRoutes);
 app.use(`${API_PREFIX}/workspaces`, sprintRoutes);
+app.use(`${API_PREFIX}/dashboard`, dashboardRoutes);
+
 
 
 
@@ -58,9 +61,7 @@ async function startServer() {
     // Sync models with database
     const isDevelopment = process.env.NODE_ENV !== "production";
 
-    await sequelize.sync({
-      alter: true,
-    });
+   await sequelize.sync();
     console.log("✅ Database Synced Successfully");
 
     // Start server

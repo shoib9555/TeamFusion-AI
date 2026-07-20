@@ -60,6 +60,11 @@ const Task = sequelize.define(
       allowNull: true,
     },
 
+    completedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+
     position: {
       type: DataTypes.INTEGER,
       allowNull: false,
