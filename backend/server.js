@@ -1,5 +1,6 @@
 require("dotenv").config();
 
+const cors = require("cors");
 const express = require("express");
 const path = require("path");
 const { API_PREFIX } = require("./config/api");
@@ -23,6 +24,12 @@ const app = express();
 
 // Middleware
 app.use(express.json());
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
 // Serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use(`${API_PREFIX}/auth`, authRoutes);
